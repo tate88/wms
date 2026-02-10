@@ -466,7 +466,7 @@ class _BarcodePrintDetailsPageState extends State<BarcodePrintDetailsPage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           onPressed: () {
                             if (tempController.text.trim().isNotEmpty) {
                               setState(() {
@@ -497,7 +497,8 @@ class _BarcodePrintDetailsPageState extends State<BarcodePrintDetailsPage> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 0,
                           ),
-                          child: const Text(
+                          icon: const Icon(Icons.save),
+                          label: const Text(
                             "Save",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,

@@ -397,11 +397,7 @@ void _showOverlay() {
                       color: Colors.grey,
                     ),
                   ),
-                  leading: const Icon(
-                    Icons.inventory_2_outlined,
-                    size: 20,
-                    color: GRNConstants.accentBlue,
-                  ),
+               
                   onTap: () {
                     widget.barcodeController.text = stock['StkCode'];
                     widget.onStockSelected(stock); // Pass the entire stock item
@@ -442,7 +438,7 @@ void _showOverlay() {
             TextField(
               controller: widget.barcodeController,
               decoration: InputDecoration(
-                hintText: 'Scan or search stock code',
+                hintText: 'Scan or type stock code',
                 prefixIcon: const Icon(
                   Icons.qr_code_scanner,
                   color: GRNConstants.accentBlue,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:WMS/ui/GRN/GRN_page.dart';
+import 'package:WMS/ui/location_transfer/location_transfer_selection_page.dart';
 import 'package:WMS/constants/constant.dart';
 import 'package:WMS/ui/login/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedLocation = "03 HCM COLDSTORAGE"; // Changed to mutable
   late Timer _timer;
   String _currentDateTime = "";
-  
+
   // Add list of available locations
   final List<String> availableLocations = [
     "01 HCM WAREHOUSE",
@@ -65,14 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-void _updateTime() {
-  final now = DateTime.now();
-  setState(() {
-    _currentDateTime =
-        "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} "
-        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-  });
-}
+  void _updateTime() {
+    final now = DateTime.now();
+    setState(() {
+      _currentDateTime =
+          "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} "
+          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    });
+  }
 
   @override
   void dispose() {
@@ -88,6 +89,14 @@ void _updateTime() {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const GRNPage()),
+        );
+        break;
+
+      case 'Location Transfer':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const LocationTransferSelectionPage()),
         );
         break;
 
@@ -156,7 +165,7 @@ void _updateTime() {
               Container(
                 height: headerHeight,
                 decoration: const BoxDecoration(
-                  color: AppColors.primaryBlue,// Corporate blue
+                  color: AppColors.primaryBlue, // Corporate blue
                   borderRadius: BorderRadius.only(
                     bottomRight: Radius.circular(50),
                   ),
@@ -203,7 +212,6 @@ void _updateTime() {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                        
                           RichText(
                             text: TextSpan(
                               style: TextStyle(
@@ -215,7 +223,6 @@ void _updateTime() {
                                   text: project1Attributes,
                                   style: const TextStyle(color: Colors.white),
                                 ),
-                              
                               ],
                             ),
                           ),
@@ -234,7 +241,6 @@ void _updateTime() {
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                     
                                       child: const Icon(
                                         Icons.settings,
                                         color: Colors.orange,
@@ -327,19 +333,15 @@ void _updateTime() {
 
   Widget _buildMenuDrawer() {
     return Drawer(
-      backgroundColor: Colors.white ,
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-         
             decoration: const BoxDecoration(
-               color: AppColors.primaryBlue,
-               
+              color: AppColors.primaryBlue,
             ),
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30
-              ), 
-            
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -372,7 +374,7 @@ void _updateTime() {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              userID,
+                            userID,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: 16,
@@ -394,7 +396,6 @@ void _updateTime() {
                   ],
                 ),
                 const SizedBox(height: 10),
-             
               ],
             ),
           ),
@@ -406,8 +407,8 @@ void _updateTime() {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-              //  color: const Color(0xFF0E426C).withOpacity(0.1), // Blue
-          
+                //  color: const Color(0xFF0E426C).withOpacity(0.1), // Blue
+
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -435,10 +436,11 @@ void _updateTime() {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-              //  color: Colors.red.withOpacity(0.1),
+                //  color: Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.delete, color: Colors.orange, size: 20), // Red with greyish tint
+              child: const Icon(Icons.delete,
+                  color: Colors.orange, size: 20), // Red with greyish tint
             ),
             title: const Text(
               'Clear Logs',
@@ -461,7 +463,7 @@ void _updateTime() {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-               // color: const Color(0xFF2E7D32).withOpacity(0.1), // Green
+                // color: const Color(0xFF2E7D32).withOpacity(0.1), // Green
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -473,14 +475,13 @@ void _updateTime() {
             title: const Text(
               'Log Out',
               style: TextStyle(
-               fontWeight: FontWeight.w500,
-             
+                fontWeight: FontWeight.w500,
               ),
             ),
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey, 
+              color: Colors.grey,
             ),
             onTap: () {
               Navigator.pop(context); // Close drawer
@@ -523,6 +524,8 @@ void _updateTime() {
         case 'stock movement':
           return const Color(0xFF64B5F6); // Green
         case 'location transfer':
+          return const Color(0xFF64B5F6); // Orange
+        case 'transfer to location':
           return const Color(0xFF64B5F6); // Orange
         case 'picking':
           return const Color(0xFF64B5F6); // Purple
@@ -607,7 +610,8 @@ void _updateTime() {
           ),
           title: Row(
             children: [
-              Icon(Icons.logout, color: Color(0xFF4A6B8A), size: 24), // Blue with greyish tint
+              Icon(Icons.logout,
+                  color: Color(0xFF4A6B8A), size: 24), // Blue with greyish tint
               const SizedBox(width: 12),
               const Text('Confirm Logout'),
             ],
@@ -635,7 +639,8 @@ void _updateTime() {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A6B8A), // Blue with greyish tint
+                backgroundColor:
+                    const Color(0xFF4A6B8A), // Blue with greyish tint
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -676,7 +681,7 @@ void _updateTime() {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Title
               Container(
                 padding: const EdgeInsets.all(20),
@@ -699,20 +704,24 @@ void _updateTime() {
                   ],
                 ),
               ),
-              
+
               // Location list
-                ...availableLocations.map((location) {
+              ...availableLocations.map((location) {
                 final isSelected = location == selectedLocation;
                 return ListTile(
                   leading: Icon(
-                    isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
                     color: isSelected ? Colors.orange : Colors.grey,
                   ),
                   title: Text(
                     location,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? AppColors.primaryBlue: Colors.black87,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color:
+                          isSelected ? AppColors.primaryBlue : Colors.black87,
                     ),
                   ),
                   onTap: () {
@@ -720,7 +729,7 @@ void _updateTime() {
                       selectedLocation = location;
                     });
                     Navigator.pop(context);
-                    
+
                     // Show snackbar with selected location
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -747,7 +756,7 @@ void _updateTime() {
                   },
                 );
               }).toList(),
-              
+
               const SizedBox(height: 20),
             ],
           ),

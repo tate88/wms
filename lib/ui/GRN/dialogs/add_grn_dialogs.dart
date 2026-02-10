@@ -254,7 +254,7 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
                       const SizedBox(height: 6),
                       Text(
                         widget.stkname1,
-                          style: GRNConstants.sectionTitleStyle,
+                          style: GRNConstants.stockCodeStyle,
                           
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -327,7 +327,7 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
             ],
 
             const SizedBox(height: 12),
-            _label('Stock Quantity'),
+            _label('Base Quantity'),
             const SizedBox(height: 4),
             _buildStockQtyBox(),
           ],
