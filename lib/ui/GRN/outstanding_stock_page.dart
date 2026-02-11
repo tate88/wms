@@ -255,7 +255,7 @@ class OutstandingStockState {
   OutstandingStockState copyWith({
     bool? isLoading,
     List<OutstandingStockItem>? items,
-    String? errorMessage, // Add this to the copyWith method
+    String? errorMessage, 
     PODetails? poDetails,
   }) {
     return OutstandingStockState(

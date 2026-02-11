@@ -1,34 +1,40 @@
-class GRNRecord {
+class GRNRecordModel {
   final String orderId;
   final String date;
   final String apCode;
+  final String apName;
   final String refNo;
 
-  GRNRecord({
+  const GRNRecordModel({
     required this.orderId,
     required this.date,
     required this.apCode,
+    required this.apName,
     required this.refNo,
   });
 
-  factory GRNRecord.fromMap(Map<String, dynamic> map) {
-    return GRNRecord(
-      orderId: map['orderId']?.toString() ?? '',
-      date: map['date']?.toString() ?? '',
-      apCode: map['apCode']?.toString() ?? '',
-      refNo: map['refNo']?.toString() ?? '',
+  
+  factory GRNRecordModel.fromJson(Map<String, dynamic> json) {
+    return GRNRecordModel(
+      orderId: json['orderId']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      apCode: json['apCode']?.toString() ?? '',
+      apName: json['apName']?.toString() ?? '',
+      refNo: json['refNo']?.toString() ?? '',
     );
   }
 
-  Map<String, String> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'orderId': orderId,
       'date': date,
       'apCode': apCode,
+      'apName': apName,
       'refNo': refNo,
     };
   }
 }
+
 
 class GRNFilters {
   final String? selectedAPCode;
@@ -46,14 +52,16 @@ class GRNFilters {
   });
 
   GRNFilters copyWith({
-    String? selectedAPCode,
+    Object? selectedAPCode = _undefined,
     String? selectedDate,
     DateTime? selectedCustomDate,
     String? poNumber,
     String? invoiceNumber,
   }) {
     return GRNFilters(
-      selectedAPCode: selectedAPCode ?? this.selectedAPCode,
+      selectedAPCode: selectedAPCode == _undefined
+          ? this.selectedAPCode
+          : selectedAPCode as String?,
       selectedDate: selectedDate ?? this.selectedDate,
       selectedCustomDate: selectedCustomDate ?? this.selectedCustomDate,
       poNumber: poNumber ?? this.poNumber,
@@ -62,8 +70,10 @@ class GRNFilters {
   }
 }
 
+const Object _undefined = Object();
+
 class GRNState {
-  final List<GRNRecord> records;
+  final List<GRNRecordModel> records;
   final GRNFilters filters;
   final bool isLoading;
   final String dropdownSearchQuery;
@@ -76,7 +86,7 @@ class GRNState {
   });
 
   GRNState copyWith({
-    List<GRNRecord>? records,
+    List<GRNRecordModel>? records,
     GRNFilters? filters,
     bool? isLoading,
     String? dropdownSearchQuery,
@@ -89,22 +99,26 @@ class GRNState {
     );
   }
 
-  List<GRNRecord> get filteredRecords {
-    return records.where((record) {
+  List<GRNRecordModel> get filteredRecords {
+    
+
+    final filtered = records.where((record) {
       bool matchesAP = filters.selectedAPCode == null ||
           filters.selectedAPCode == 'List POs for all suppliers' ||
           filters.selectedAPCode == 'Supplier' ||
-          
           record.apCode == filters.selectedAPCode;
 
       bool matchesDate = filters.selectedDate == 'List POs for all dates' ||
-      filters.selectedDate == 'Date' ||
+          filters.selectedDate == 'Date' ||
           record.date == filters.selectedDate ||
           (filters.selectedCustomDate != null &&
               record.date == _formatDate(filters.selectedCustomDate!));
 
       return matchesAP && matchesDate;
     }).toList();
+
+   
+    return filtered;
   }
 
   List<String> get uniqueDates {

@@ -82,10 +82,13 @@ class APDropdown extends StatelessWidget {
             enabled: false,
             child: StatefulBuilder(
               builder: (BuildContext context, StateSetter setMenuState) {
+                final searchQuery = apSearchController.text
+                    .toLowerCase(); // Use controller text
                 final filtered = GRNConstants.apOptions
                     .where((ap) =>
-                        apSearchQuery.isEmpty ||
-                        ap.toLowerCase().contains(apSearchQuery.toLowerCase()))
+                        searchQuery.isEmpty ||
+                        ap['apCode']!.toLowerCase().contains(searchQuery) ||
+                        ap['apName']!.toLowerCase().contains(searchQuery))
                     .toList();
 
                 return Container(
@@ -110,8 +113,7 @@ class APDropdown extends StatelessWidget {
                       children: [
                         _buildSearchField(setMenuState),
                         const SizedBox(height: 8),
-                        if (apSearchQuery.isNotEmpty)
-                          _buildResultsCount(filtered),
+                        
                         const SizedBox(height: 8),
                         _buildFilteredList(context, filtered),
                       ],
@@ -136,10 +138,11 @@ class APDropdown extends StatelessWidget {
       controller: apSearchController,
       autofocus: true,
       decoration: InputDecoration(
+        hintText: 'Search suppliers...',
         filled: true,
         fillColor: Colors.white,
         prefixIcon: const Icon(Icons.search, color: GRNConstants.accentBlue),
-        suffixIcon: apSearchQuery.isNotEmpty
+        suffixIcon: apSearchController.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear, color: GRNConstants.accentBlue),
                 onPressed: () {
@@ -152,11 +155,12 @@ class APDropdown extends StatelessWidget {
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
-          borderSide: BorderSide(color: Colors.blue[200]!),
+          borderSide: BorderSide(color: GRNConstants.accentBlue),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
-          borderSide: BorderSide(color: Colors.blue[200]!),
+          borderSide:
+              BorderSide(color: GRNConstants.accentBlue.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
@@ -173,58 +177,60 @@ class APDropdown extends StatelessWidget {
     );
   }
 
-  Widget _buildResultsCount(List<String> filtered) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        'Found ${filtered.length} results',
-        style: const TextStyle(
-          color: GRNConstants.accentBlue,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
 
-  Widget _buildFilteredList(BuildContext context, List<String> filtered) {
+  Widget _buildFilteredList(
+      BuildContext context, List<Map<String, String>> filtered) {
     return Expanded(
-      child: ListView.separated(
+      child: ListView.builder(
         itemCount: filtered.length,
-        separatorBuilder: (context, index) =>
-            Divider(height: 1, color: Colors.blue[100]),
         itemBuilder: (context, index) {
-          final value = filtered[index];
-          return InkWell(
-            onTap: () => Navigator.pop(context, value),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  if (value == selectedAP) ...[
-                    const Icon(
-                      Icons.check_circle,
-                      color: GRNConstants.accentBlue,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: value == selectedAP
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        color: value == selectedAP
-                            ? GRNConstants.accentBlue
-                            : Colors.black,
+          final supplier = filtered[index];
+          final apCode = supplier['apCode']!;
+          final apName = supplier['apName']!;
+          final isSelected = apCode == selectedAP;
+
+          return PopupMenuItem<String>(
+            value: apCode,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              child: InkWell(
+                onTap: () => Navigator.pop(context, apCode),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            apCode,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isSelected
+                                  ? GRNConstants.primaryBlue
+                                  : Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            apName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    if (isSelected)
+                      const Icon(
+                        Icons.check,
+                        color: GRNConstants.primaryBlue,
+                        size: 18,
+                      ),
+                  ],
+                ),
               ),
             ),
           );
@@ -249,7 +255,7 @@ class DatePickerField extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
+       borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: GestureDetector(
@@ -353,70 +359,75 @@ class _BarcodeSectionState extends State<BarcodeSection> {
     }
   }
 
-void _showOverlay() {
-  _removeOverlay();
+  void _showOverlay() {
+    _removeOverlay();
 
-  _overlayEntry = OverlayEntry(
-    builder: (context) => Positioned(
-      width: MediaQuery.of(context).size.width - 32, // Account for padding
-      child: CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        offset: const Offset(0, 60), // Position below the text field
-        child: Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
-          child: Container(
-            constraints: const BoxConstraints(maxHeight: 350), // Limit height for 5 items
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              itemCount: _filteredStocks.length, // Show all items, but limit height
-              separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: Colors.grey[200]),
-              itemBuilder: (context, index) {
-                final stock = _filteredStocks[index];
-                return ListTile(
-                  dense: true,
-                  title: Text(
-                    stock['StkCode'], // Display stock code
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: MediaQuery.of(context).size.width - 32, // Account for padding
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 60), // Position below the text field
+          child: Material(
+            elevation: 8,
+            borderRadius:
+                BorderRadius.circular(GRNConstants.defaultBorderRadius),
+            child: Container(
+              constraints: const BoxConstraints(
+                  maxHeight: 350), // Limit height for 5 items
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.circular(GRNConstants.defaultBorderRadius),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount:
+                    _filteredStocks.length, // Show all items, but limit height
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, color: Colors.grey[200]),
+                itemBuilder: (context, index) {
+                  final stock = _filteredStocks[index];
+                  return ListTile(
+                    dense: true,
+                    title: Text(
+                      stock['StkCode'], // Display stock code
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    stock['StkNameS'], // Display stock name
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
+                    subtitle: Text(
+                      stock['StkNameS'], // Display stock name
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-               
-                  onTap: () {
-                    widget.barcodeController.text = stock['StkCode'];
-                    widget.onStockSelected(stock); // Pass the entire stock item
-                    _removeOverlay();
-                    setState(() {
-                      _showDropdown = false;
-                    });
-                  },
-                );
-              },
+                    onTap: () {
+                      widget.barcodeController.text = stock['StkCode'];
+                      widget
+                          .onStockSelected(stock); // Pass the entire stock item
+                      _removeOverlay();
+                      setState(() {
+                        _showDropdown = false;
+                      });
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
 
-  Overlay.of(context).insert(_overlayEntry!);
-}
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;

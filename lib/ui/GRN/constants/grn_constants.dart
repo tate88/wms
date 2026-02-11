@@ -11,7 +11,7 @@ class GRNConstants {
   static const Color borderGray = Color(0xFFE2E8F0);
   static const Color pureWhite = Color(0xFFFFFFFF);
 
-   static const TextStyle headerStyle = TextStyle(
+  static const TextStyle headerStyle = TextStyle(
     color: Colors.white,
     fontSize: 18,
     fontWeight: FontWeight.w600,
@@ -22,13 +22,13 @@ class GRNConstants {
     fontSize: 14,
     fontWeight: FontWeight.w600,
   );
-  
+
   static const TextStyle labelStyle = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: Color(0xFF64748B),
   );
-   static const TextStyle valueStyle = TextStyle(
+  static const TextStyle valueStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: textDark,
@@ -45,21 +45,20 @@ class GRNConstants {
     fontWeight: FontWeight.w600,
     color: primaryBlue,
   );
-  
-    static const TextStyle stockCodeStyle = TextStyle(
+
+  static const TextStyle stockCodeStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
     color: primaryBlue,
   );
 
-   static const TextStyle stockNameStyle = TextStyle(
+  static const TextStyle stockNameStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: Colors.black87,
   );
 
-
-   static final TextStyle sectionTitleStyle = TextStyle(
+  static final TextStyle sectionTitleStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     color: GRNConstants.textMedium,
@@ -88,33 +87,31 @@ class GRNConstants {
     color: Color(0xFF94A3B8),
   );
 
-   static const TextStyle dialogHeaderStyle = TextStyle(
+  static const TextStyle dialogHeaderStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     color: Colors.white,
   );
 
-    static const double borderRadius = 8.0;
+  static const double borderRadius = 8.0;
   static const double containerHeight = 56.0;
   static const double iconSize = 20.0;
-  
-  // Sample AP data
-  static const List<String> apOptions = [
-    'ANG JUN SHIPPING AGENCIES',
-    'BONANZA SHIPPING AGENCIES SDN BHD',
-    'CASH SUPPLIER',
-    'Tech Solutions',
-    'Global Trading',
-    'Maritime Services',
-    'Supply Chain Co',
-    'Ocean Freight Services',
-    'Express Logistics',
-    'International Trading'
+
+  // Sample AP data with codes and names
+  static const List<Map<String, String>> apOptions = [
+    {'apCode': 'SUP001', 'apName': 'ANG JUN SHIPPING AGENCIES'},
+    {'apCode': 'SUP002', 'apName': 'BONANZA SHIPPING AGENCIES SDN BHD'},
+    {'apCode': 'SUP003', 'apName': 'CASH SUPPLIER'},
+    {'apCode': 'SUP004', 'apName': 'Tech Solutions'},
+    {'apCode': 'SUP005', 'apName': 'Global Trading'},
+    {'apCode': 'SUP006', 'apName': 'Maritime Services'},
+    {'apCode': 'SUP007', 'apName': 'Supply Chain Co'},
+    {'apCode': 'SUP008', 'apName': 'Ocean Freight Services'},
+    {'apCode': 'SUP009', 'apName': 'Express Logistics'},
+    {'apCode': 'SUP010', 'apName': 'International Trading'}
   ];
 
   // Text styles
- 
- 
 
   // Border radius
   static const double defaultBorderRadius = 8.0;

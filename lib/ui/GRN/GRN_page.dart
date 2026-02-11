@@ -11,13 +11,15 @@ class GRNPage extends StatefulWidget {
 
   @override
   State<GRNPage> createState() => _GRNPageState();
-} 
+}
 
 class _GRNPageState extends State<GRNPage> {
   // Controllers
-  final TextEditingController _dropdownSearchController = TextEditingController();
+  final TextEditingController _dropdownSearchController =
+      TextEditingController();
   final TextEditingController _poNumberController = TextEditingController();
-  final TextEditingController _invoiceNumberController = TextEditingController();
+  final TextEditingController _invoiceNumberController =
+      TextEditingController();
 
   // State
   late GRNState _state;
@@ -28,7 +30,7 @@ class _GRNPageState extends State<GRNPage> {
     _state = GRNState(
       records: [],
       filters: GRNFilters(
-        selectedAPCode: 'Supplier',
+        selectedAPCode: null, // Start with "all suppliers" selected
         selectedDate: 'Date',
         poNumber: '',
         invoiceNumber: '',
@@ -121,9 +123,9 @@ class _GRNPageState extends State<GRNPage> {
           context,
           MaterialPageRoute(
             builder: (context) => AddGRNPage(
-            poNumberController: _poNumberController,
-            invoiceNumberController: _invoiceNumberController,
-          ),
+              poNumberController: _poNumberController,
+              invoiceNumberController: _invoiceNumberController,
+            ),
           ),
         );
       },
@@ -143,12 +145,14 @@ class _GRNPageState extends State<GRNPage> {
   }
 
   void _onAPCodeChanged(String? apCode) {
+    
     setState(() {
       _state = _state.copyWith(
         filters: _state.filters.copyWith(selectedAPCode: apCode),
         dropdownSearchQuery: '',
       );
       _dropdownSearchController.clear();
+     
     });
   }
 
@@ -203,7 +207,6 @@ class _GRNPageState extends State<GRNPage> {
         });
       }
     } catch (e) {
-    
       _showErrorSnackBar('Error opening date picker');
     }
   }
