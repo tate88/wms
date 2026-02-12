@@ -404,7 +404,7 @@ class _AddGRNPageState extends State<AddGRNPage> with TickerProviderStateMixin {
           .reduce((max, seq) => seq > max ? seq : max);
 
       newItem = GRNItem(
-        seq: maxSeq + 1, 
+        seq: maxSeq + 1, // Increment sequence number
         barcode: barcode,
         shortName: existingItem.shortName, 
         qty: quantity,

@@ -35,6 +35,12 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
     super.initState();
     _transferData = LocationTransferData();
 
+    // Add focus listeners to auto-update steps
+    _forkliftFocus.addListener(_onForkliftFocusChanged);
+    _locationFocus.addListener(_onLocationFocusChanged);
+    _stockFocus.addListener(_onStockFocusChanged);
+    _quantityFocus.addListener(_onQuantityFocusChanged);
+
     // Auto-focus the first input
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _forkliftFocus.requestFocus();
@@ -43,6 +49,12 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
 
   @override
   void dispose() {
+    // Remove focus listeners
+    _forkliftFocus.removeListener(_onForkliftFocusChanged);
+    _locationFocus.removeListener(_onLocationFocusChanged);
+    _stockFocus.removeListener(_onStockFocusChanged);
+    _quantityFocus.removeListener(_onQuantityFocusChanged);
+
     _forkliftController.dispose();
     _locationController.dispose();
     _stockController.dispose();
@@ -105,7 +117,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Current Step Card
-                _buildCurrentStepCard(),
+                //_buildCurrentStepCard(),
 
                 const SizedBox(height: 24),
 
@@ -198,7 +210,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
           label: 'Forklift/Trolley Code',
           hint: 'Scan or enter forklift code',
           icon: Icons.local_shipping,
-          isActive: _transferData.currentStep == 0,
+          isActive: true,
           isCompleted: _transferData.forkliftCode != null,
           value: _transferData.forkliftCode,
           onScan: _onForkliftScanned,
@@ -214,7 +226,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
           label: 'Source Location',
           hint: 'Scan or enter location code',
           icon: Icons.location_on,
-          isActive: _transferData.currentStep == 1,
+          isActive: true,
           isCompleted: _transferData.sourceLocationCode != null,
           value: _transferData.sourceLocationCode,
           onScan: _onLocationScanned,
@@ -230,7 +242,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
           label: 'Stock Code',
           hint: 'Scan or enter stock code',
           icon: Icons.inventory,
-          isActive: _transferData.currentStep == 2,
+          isActive: true,
           isCompleted: _transferData.stockCode != null,
           value: _transferData.stockCode,
           onScan: _onStockScanned,
@@ -243,15 +255,11 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _transferData.currentStep == 3
-                ? GRNConstants.primaryBlue.withOpacity(0.05)
-                : Colors.grey.withOpacity(0.05),
+            color: GRNConstants.primaryBlue.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _transferData.currentStep == 3
-                  ? GRNConstants.primaryBlue
-                  : Colors.grey.withOpacity(0.3),
-              width: _transferData.currentStep == 3 ? 2 : 1,
+              color: GRNConstants.primaryBlue,
+              width: 2,
             ),
           ),
           child: Column(
@@ -262,9 +270,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _transferData.currentStep == 3
-                          ? GRNConstants.primaryBlue
-                          : Colors.grey,
+                      color: GRNConstants.primaryBlue,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -279,9 +285,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _transferData.currentStep == 3
-                          ? GRNConstants.primaryBlue
-                          : Colors.grey,
+                      color: GRNConstants.primaryBlue,
                     ),
                   ),
                 ],
@@ -291,7 +295,7 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
                 controller: _quantityController,
                 focusNode: _quantityFocus,
                 keyboardType: TextInputType.number,
-                enabled: _transferData.currentStep == 3,
+                enabled: true,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   hintText: 'Enter quantity',
@@ -312,12 +316,6 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
                       clearErrorMessage: true,
                     );
                   });
-                },
-                onFieldSubmitted: (value) {
-                  // When user presses Enter, submit if all data is complete
-                  if (_transferData.canSubmit) {
-                    _submitTransfer();
-                  }
                 },
               ),
             ],
@@ -429,35 +427,8 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        // Back Button
-        if (_transferData.currentStep > 0)
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _goBack,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF64748B),
-                side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.arrow_back, size: 18),
-                  SizedBox(width: 8),
-                  Text('Back', style: TextStyle(fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ),
-
-        if (_transferData.currentStep > 0) const SizedBox(width: 12),
-
-        // Submit/Next Button
+        // Submit Button
         Expanded(
-          flex: _transferData.currentStep > 0 ? 2 : 1,
           child: ElevatedButton(
             onPressed: _transferData.canSubmit ? _submitTransfer : null,
             style: ElevatedButton.styleFrom(
@@ -516,6 +487,42 @@ class _LocationTransferPageState extends State<LocationTransferPage> {
         return Icons.numbers;
       default:
         return Icons.info;
+    }
+  }
+
+  // Focus change handlers
+  void _onForkliftFocusChanged() {
+    if (!_forkliftFocus.hasFocus &&
+        _forkliftController.text.trim().isNotEmpty) {
+      _onForkliftScanned(_forkliftController.text);
+    }
+  }
+
+  void _onLocationFocusChanged() {
+    if (!_locationFocus.hasFocus &&
+        _locationController.text.trim().isNotEmpty) {
+      _onLocationScanned(_locationController.text);
+    }
+  }
+
+  void _onStockFocusChanged() {
+    if (!_stockFocus.hasFocus && _stockController.text.trim().isNotEmpty) {
+      _onStockScanned(_stockController.text);
+    }
+  }
+
+  void _onQuantityFocusChanged() {
+    if (!_quantityFocus.hasFocus &&
+        _quantityController.text.trim().isNotEmpty) {
+      final quantity = double.tryParse(_quantityController.text.trim());
+      if (quantity != null) {
+        setState(() {
+          _transferData = _transferData.copyWith(
+            quantity: quantity,
+            clearErrorMessage: true,
+          );
+        });
+      }
     }
   }
 

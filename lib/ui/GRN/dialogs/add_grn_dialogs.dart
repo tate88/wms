@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart'; // Import for date formatting
 import '../models/grn_models.dart';
 import '../constants/grn_constants.dart';
+import 'package:WMS/utils/date_picker_utils.dart';
 
 class QuantityInputDialog extends StatefulWidget {
   final String stkcode;
@@ -78,29 +79,19 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
   }
 
   Future<void> _selectDate(
-      BuildContext context, TextEditingController controller) async {
-    final DateTime? picked = await showDatePicker(
+    BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showCustomDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: GRNConstants
-                  .primaryBlue, // <-- Change this to your highlight color
-              onPrimary: Colors.white, // Text color on the header
-              onSurface: Colors.black, // Default text color
-            ),
-            dialogTheme: const DialogThemeData(
-              backgroundColor: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      lastDate: DateTime(2100),
+      backgroundColor: Colors.grey[200], // Custom background color
+      headerColor: GRNConstants.primaryBlue, // Custom header color
+      headerTextColor: Colors.white, // Custom header text color
+      bodyTextColor: Colors.black, // Custom body text color
+      buttonTextColor: GRNConstants.primaryBlue, // Custom button text color
     );
+
     if (picked != null) {
       setState(() {
         controller.text = DateFormat('dd/MM/yyyy').format(picked);
@@ -146,17 +137,16 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
       ),
       child: Row(
         children: [
-        
-        if (_step == 1)
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _step = 0; 
-              });
-            },
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            padding: EdgeInsets.zero,
-          ),
+          if (_step == 1)
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _step = 0;
+                });
+              },
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              padding: EdgeInsets.zero,
+            ),
           Expanded(
             child: Center(
               child: Column(
@@ -247,15 +237,11 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.stkcode,
-                        style: GRNConstants.stockCodeStyle
-                      ),
+                      Text(widget.stkcode, style: GRNConstants.stockCodeStyle),
                       const SizedBox(height: 6),
                       Text(
                         widget.stkname1,
-                          style: GRNConstants.stockCodeStyle,
-                          
+                        style: GRNConstants.sectionTitleStyle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -470,7 +456,6 @@ class _QuantityInputDialogState extends State<QuantityInputDialog> {
       ),
       child: Row(
         children: [
-         
           Expanded(
             flex: 2,
             child: ElevatedButton(

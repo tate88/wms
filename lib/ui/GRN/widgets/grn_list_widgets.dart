@@ -110,7 +110,7 @@ class GRNFilterSection extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         floatingLabelStyle: const TextStyle(
-          color: Colors.white, // 👈 focus 后
+          color: Colors.white,
         ),
         filled: false,
         fillColor: Colors.grey[400],
@@ -186,19 +186,173 @@ class GRNFilterSection extends StatelessWidget {
   }
 
   Widget _buildAPCodeDropdown(BuildContext context) {
-  // Create structured supplier options list
-  final structuredOptions = GRNConstants.apOptions;
+    // Create structured supplier options list
+    final structuredOptions = GRNConstants.apOptions;
 
-  // Special marker for "all suppliers" option
-  const String allSuppliersMarker = '__ALL_SUPPLIERS__';
+    // Special marker for "all suppliers" option
+    const String allSuppliersMarker = '__ALL_SUPPLIERS__';
+
+    // Build popup menu items
+    final List<PopupMenuEntry<String>> menuItems = [];
+
+    menuItems.add(
+      PopupMenuItem<String>(
+        value: allSuppliersMarker,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.list_alt,
+                color: GRNConstants.primaryBlue,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'List POs for all suppliers',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: filters.selectedAPCode == null
+                        ? GRNConstants.primaryBlue
+                        : Colors.black87,
+                  ),
+                ),
+              ),
+              if (filters.selectedAPCode == null)
+                const Icon(
+                  Icons.check,
+                  color: GRNConstants.primaryBlue,
+                  size: 18,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Add supplier options
+    for (int i = 0; i < structuredOptions.length; i++) {
+      final supplier = structuredOptions[i];
+      final apCode = supplier['apCode']!;
+      final apName = supplier['apName']!;
+      final isSelected = apCode == filters.selectedAPCode;
+
+      menuItems.add(
+        PopupMenuItem<String>(
+          value: apCode,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        apCode,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected
+                              ? GRNConstants.primaryBlue
+                              : Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        apName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(
+                    Icons.check,
+                    color: GRNConstants.primaryBlue,
+                    size: 18,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return PopupMenuButton<String>(
+      onSelected: (String value) {
+        final selectedValue = value == allSuppliersMarker ? null : value;
+        onAPCodeChanged(selectedValue);
+      },
+      itemBuilder: (BuildContext context) => menuItems,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      offset: const Offset(0, 8),
+      color: Colors.white,
+      elevation: 8,
+      child: Container(
+        height: GRNConstants.containerHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(GRNConstants.borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.business,
+              color: GRNConstants.orange,
+              size: GRNConstants.iconSize,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                filters.selectedAPCode ?? 'Supplier',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.left,
+              ),
+            ),
+            const Icon(
+              Icons.arrow_drop_down,
+              color: GRNConstants.orange,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+Widget _buildDateDropdown() {
+  // Create structured date options list
+  const String allDatesMarker = '__ALL_DATES__';
 
   // Build popup menu items
   final List<PopupMenuEntry<String>> menuItems = [];
 
-
+  // Add "List POs for all dates" option
   menuItems.add(
     PopupMenuItem<String>(
-      value: allSuppliersMarker,
+      value: allDatesMarker,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
@@ -211,17 +365,17 @@ class GRNFilterSection extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'List POs for all suppliers',
+                'List POs for all dates',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: filters.selectedAPCode == null
+                  color: filters.selectedDate == 'List POs for all dates'
                       ? GRNConstants.primaryBlue
                       : Colors.black87,
                 ),
               ),
             ),
-            if (filters.selectedAPCode == null)
+            if (filters.selectedDate == 'List POs for all dates')
               const Icon(
                 Icons.check,
                 color: GRNConstants.primaryBlue,
@@ -233,46 +387,32 @@ class GRNFilterSection extends StatelessWidget {
     ),
   );
 
+  // Get all dates except 'List POs for all dates'
+  final availableDates = uniqueDates.where((date) => date != 'List POs for all dates').toList();
 
-  // Add supplier options
-  for (int i = 0; i < structuredOptions.length; i++) {
-    final supplier = structuredOptions[i];
-    final apCode = supplier['apCode']!;
-    final apName = supplier['apName']!;
-    final isSelected = apCode == filters.selectedAPCode;
+  // Add date options (show all, but limit height for scrolling)
+  for (int i = 0; i < availableDates.length; i++) {
+    final date = availableDates[i];
+    final isSelected = date == filters.selectedDate;
 
     menuItems.add(
       PopupMenuItem<String>(
-        value: apCode,
+        value: date,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           child: Row(
             children: [
             
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      apCode,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected
-                            ? GRNConstants.primaryBlue
-                            : Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      apName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? GRNConstants.primaryBlue
+                        : Colors.black87,
+                  ),
                 ),
               ),
               if (isSelected)
@@ -290,8 +430,13 @@ class GRNFilterSection extends StatelessWidget {
 
   return PopupMenuButton<String>(
     onSelected: (String value) {
-      final selectedValue = value == allSuppliersMarker ? null : value;
-      onAPCodeChanged(selectedValue);
+      if (value == allDatesMarker) {
+        onDateChanged('List POs for all dates');
+      } else if (value == 'Specific Date') {
+        onSelectCustomDate();
+      } else {
+        onDateChanged(value);
+      }
     },
     itemBuilder: (BuildContext context) => menuItems,
     shape: RoundedRectangleBorder(
@@ -300,6 +445,9 @@ class GRNFilterSection extends StatelessWidget {
     offset: const Offset(0, 8),
     color: Colors.white,
     elevation: 8,
+    constraints: BoxConstraints(
+      maxHeight: availableDates.length > 7 ? 450 : double.infinity, // Limit height if more than 7 dates
+    ),
     child: Container(
       height: GRNConstants.containerHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -319,14 +467,14 @@ class GRNFilterSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Icon(
-            Icons.business,
+            Icons.calendar_today,
             color: GRNConstants.orange,
             size: GRNConstants.iconSize,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              filters.selectedAPCode ?? 'Supplier',
+              filters.selectedDate,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -344,70 +492,7 @@ class GRNFilterSection extends StatelessWidget {
     ),
   );
 }
-
-
-  Widget _buildDateDropdown() {
-    return Container(
-      height: GRNConstants.containerHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(GRNConstants.borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: PopupMenuButton<String>(
-        color: Colors.white,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.calendar_today,
-              color: GRNConstants.orange,
-              size: GRNConstants.iconSize,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                filters.selectedDate,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.left,
-              ),
-            ),
-            const Icon(
-              Icons.arrow_drop_down,
-              color: GRNConstants.orange,
-            ),
-          ],
-        ),
-        itemBuilder: (context) => [
-          ...uniqueDates.map((date) => PopupMenuItem<String>(
-                value: date,
-                child: Text(date),
-              )),
-        ],
-        onSelected: (value) {
-          if (value == 'Specific Date') {
-            onSelectCustomDate();
-          } else if (value != null) {
-            onDateChanged(value);
-          }
-        },
-      ),
-    );
-  }
 }
-
 
 class GRNDataTable extends StatelessWidget {
   final List<GRNRecordModel> records;

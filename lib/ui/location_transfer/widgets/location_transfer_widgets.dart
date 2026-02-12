@@ -240,8 +240,8 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                widget.isCompleted ? Icons.check : widget.icon,
-                color: widget.isActive || widget.isCompleted
+                widget.icon,
+                color: widget.isActive 
                     ? Colors.white
                     : Colors.grey[600],
                 size: 14,
@@ -254,7 +254,7 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: widget.isActive || widget.isCompleted
-                    ? Colors.red
+                    ? Colors.black87
                     : Colors.grey[600],
               ),
             ),

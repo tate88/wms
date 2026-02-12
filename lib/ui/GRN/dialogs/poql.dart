@@ -36,8 +36,8 @@ class StockDetailsDialog {
                 maxHeight: MediaQuery.of(context).size.height * 0.8),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(
-                  GRNConstants.dialogBorderRadius),
+              borderRadius:
+                  BorderRadius.circular(GRNConstants.dialogBorderRadius),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
@@ -62,10 +62,9 @@ class StockDetailsDialog {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(
-                          GRNConstants.dialogBorderRadius),
-                      topRight: Radius.circular(
-                          GRNConstants.dialogBorderRadius),
+                      topLeft: Radius.circular(GRNConstants.dialogBorderRadius),
+                      topRight:
+                          Radius.circular(GRNConstants.dialogBorderRadius),
                     ),
                   ),
                   child: Row(
@@ -128,12 +127,12 @@ class StockDetailsDialog {
                         ),
                         SizedBox(height: 20),
 
-                         Text(
+                        Text(
                           'Manufacturing Date',
                           style: GRNConstants.formLabelStyle,
                         ),
                         SizedBox(height: 8),
-                       
+
                         GestureDetector(
                           onTap: () => _selectDate(context, _mfgDateController),
                           child: AbsorbPointer(
@@ -153,7 +152,7 @@ class StockDetailsDialog {
                           style: GRNConstants.formLabelStyle,
                         ),
                         SizedBox(height: 8),
-                        
+
                         GestureDetector(
                           onTap: () => _selectDate(context, _expDateController),
                           child: AbsorbPointer(
@@ -188,8 +187,6 @@ class StockDetailsDialog {
                           controller: putawayWHController,
                         ),
                         SizedBox(height: 20),
-
-                       
                       ],
                     ),
                   ),
@@ -215,15 +212,36 @@ class StockDetailsDialog {
 
   static Future<void> _selectDate(
       BuildContext context, TextEditingController controller) async {
-    final DateTime? picked = await showDatePicker(
+    DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime(2100),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogTheme: DialogThemeData(
+              backgroundColor: Colors.grey[200], // Change background color here
+            ),
+            colorScheme: ColorScheme.light(
+              primary: GRNConstants.primaryBlue, // Header background color
+              onPrimary: Colors.white, // Header text color
+              onSurface: Colors.black, // Body text color
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor:GRNConstants.primaryBlue, // Button text color
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (picked != null) {
+
+    if (pickedDate != null) {
       controller.text =
-          "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+          "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
     }
   }
 
@@ -324,10 +342,8 @@ class StockDetailsDialog {
       decoration: BoxDecoration(
         color: GRNConstants.backgroundGray,
         borderRadius: const BorderRadius.only(
-          bottomLeft:
-              Radius.circular(GRNConstants.dialogBorderRadius),
-          bottomRight:
-              Radius.circular(GRNConstants.dialogBorderRadius),
+          bottomLeft: Radius.circular(GRNConstants.dialogBorderRadius),
+          bottomRight: Radius.circular(GRNConstants.dialogBorderRadius),
         ),
       ),
       child: Row(

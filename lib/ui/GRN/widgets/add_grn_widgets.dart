@@ -4,6 +4,7 @@ import '../constants/grn_constants.dart';
 import '../constants/outstanding_stock_constants.dart';
 import 'package:intl/intl.dart';
 
+
 class SectionTitle extends StatelessWidget {
   final String title;
 
@@ -40,6 +41,7 @@ class APDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 56,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
@@ -253,6 +255,7 @@ class DatePickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+          height:   56,
       decoration: BoxDecoration(
         color: Colors.white,
        borderRadius: BorderRadius.circular(GRNConstants.defaultBorderRadius),
