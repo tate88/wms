@@ -7,6 +7,10 @@ class ProgressStepsWidget extends StatelessWidget {
   final String? locationCode;
   final String? stockCode;
   final double? quantity;
+  final String? step0Label;
+  final String? step1Label;
+  final String? step2Label;
+  final String? step3Label;
 
   const ProgressStepsWidget({
     super.key,
@@ -15,6 +19,10 @@ class ProgressStepsWidget extends StatelessWidget {
     this.locationCode,
     this.stockCode,
     this.quantity,
+    this.step0Label,
+    this.step1Label,
+    this.step2Label,
+    this.step3Label,
   });
 
   @override
@@ -55,28 +63,28 @@ class ProgressStepsWidget extends StatelessWidget {
             children: [
               _buildStepIndicator(
                 0,
-                'Forklift',
+                step0Label ?? 'Forklift',
                 Icons.local_shipping,
                 forkliftCode,
               ),
               _buildStepConnector(0),
               _buildStepIndicator(
                 1,
-                'Location',
+                step1Label ?? 'Location',
                 Icons.location_on,
                 locationCode,
               ),
               _buildStepConnector(1),
               _buildStepIndicator(
                 2,
-                'Stock',
+                step2Label ?? 'Stock',
                 Icons.inventory,
                 stockCode,
               ),
               _buildStepConnector(2),
               _buildStepIndicator(
                 3,
-                'Quantity',
+                step3Label ?? 'Quantity',
                 Icons.numbers,
                 quantity?.toString(),
               ),
@@ -96,58 +104,68 @@ class ProgressStepsWidget extends StatelessWidget {
     final bool isActive = currentStep >= step;
     final bool isCompleted = value?.isNotEmpty == true;
 
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: isCompleted
-                ? GRNConstants.green
-                : isActive
-                    ? GRNConstants.primaryBlue
-                    : Colors.grey[300],
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isCompleted ? Icons.check : icon,
-            color: isActive ? Colors.white : Colors.grey[600],
-            size: 20,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isActive ? const Color(0xFF4A6FA5) : Colors.grey[600],
-          ),
-        ),
-        if (value?.isNotEmpty == true) ...[
-          const SizedBox(height: 4),
+    return SizedBox(
+      width: 70,
+      child: Column(
+        children: [
           Container(
-            constraints: const BoxConstraints(maxWidth: 80),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: GRNConstants.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: GRNConstants.green.withOpacity(0.3)),
+              color: isCompleted
+                  ? GRNConstants.green
+                  : isActive
+                      ? GRNConstants.primaryBlue
+                      : Colors.grey[300],
+              shape: BoxShape.circle,
             ),
-            child: Text(
-              value!,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: GRNConstants.green,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
+            child: Icon(
+              isCompleted ? Icons.check : icon,
+              color: isActive ? Colors.white : Colors.grey[600],
+              size: 20,
             ),
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 32,
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isActive ? const Color(0xFF4A6FA5) : Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          if (value?.isNotEmpty == true) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: GRNConstants.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: GRNConstants.green.withOpacity(0.3)),
+              ),
+              child: Text(
+                value!,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: GRNConstants.green,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -241,9 +259,7 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
               ),
               child: Icon(
                 widget.icon,
-                color: widget.isActive 
-                    ? Colors.white
-                    : Colors.grey[600],
+                color: widget.isActive ? Colors.white : Colors.grey[600],
                 size: 14,
               ),
             ),

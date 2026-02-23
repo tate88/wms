@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'location_transfer_page.dart';
 import 'location_to_page.dart';
+import 'put_away_page.dart';
 import '../../constants/wms_constant.dart';
 
 class LocationTransferSelectionPage extends StatelessWidget {
@@ -25,7 +26,8 @@ class LocationTransferSelectionPage extends StatelessWidget {
         onPressed: () => Navigator.pop(context),
       ),
       centerTitle: true,
-      title: const Text('Location Transfer', style: GRNConstants.headerStyle),
+      title:
+          const Text('Warehouse Operations', style: GRNConstants.headerStyle),
     );
   }
 
@@ -65,7 +67,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select Transfer Type',
+                          'Select Operation',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -74,7 +76,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Choose the type of location transfer you want to perform',
+                          'Choose the warehouse operation you want to perform',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.black54,
@@ -91,34 +93,50 @@ class LocationTransferSelectionPage extends StatelessWidget {
 
             // Transfer Options
             Expanded(
-              child: Column(
-                children: [
-                  // Transfer From Option
-                  _buildTransferOption(
-                    context: context,
-                    title: 'Transfer From Location',
-                    subtitle: 'Move stock from a source location',
-                    description:
-                        'Scan forklift → source location → stock code → quantity',
-                    icon: Icons.logout,
-                    color: GRNConstants.orange,
-                    onTap: () => _navigateToTransferFrom(context),
-                  ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Put Away Option
+                    _buildTransferOption(
+                      context: context,
+                      title: 'PUT AWAY with SINGLE TRANSFER',
+                      subtitle: 'Move stock to storage locations',
+                      description:
+                          'Scan forklift → destination location → stock code → quantity',
+                      icon: Icons.drive_file_move,
+                      color: GRNConstants.primaryBlue,
+                      onTap: () => _navigateToPutAway(context),
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // Transfer To Option
-                  _buildTransferOption(
-                    context: context,
-                    title: 'Transfer To Location',
-                    subtitle: 'Move stock to a destination location',
-                    description:
-                        'Scan forklift → destination location → stock code → quantity',
-                    icon: Icons.login,
-                    color: GRNConstants.green,
-                    onTap: () => _navigateToTransferTo(context),
-                  ),
-                ],
+                    // Transfer From Option
+                    _buildTransferOption(
+                      context: context,
+                      title: 'Transfer From Location',
+                      subtitle: 'Move stock from a source location',
+                      description:
+                          'Scan forklift → source location → stock code → quantity',
+                      icon: Icons.logout,
+                      color: GRNConstants.orange,
+                      onTap: () => _navigateToTransferFrom(context),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Transfer To Option
+                    _buildTransferOption(
+                      context: context,
+                      title: 'Transfer To Location',
+                      subtitle: 'Move stock to a destination location',
+                      description:
+                          'Scan forklift → destination location → stock code → quantity',
+                      icon: Icons.login,
+                      color: GRNConstants.green,
+                      onTap: () => _navigateToTransferTo(context),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -246,6 +264,15 @@ class LocationTransferSelectionPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _navigateToPutAway(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PutAwayPage(),
       ),
     );
   }

@@ -92,6 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         break;
 
+      case 'Putaway':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const LocationTransferSelectionPage()),
+        );
+        break;
+
       case 'Location Transfer':
         Navigator.push(
           context,
