@@ -5,49 +5,49 @@ import 'models/location_transfer_models.dart';
 import 'services/location_transfer_service.dart';
 import 'widgets/location_transfer_widgets.dart';
 import 'dialogs/location_transfer_dialogs.dart';
-import 'package:WMS/constants/wms_constant.dart';
+import '../../../constants/wms_constant.dart';
 
-class PutAwayPage extends StatefulWidget {
-  const PutAwayPage({super.key});
+class LocationTransferReqToPage extends StatefulWidget {
+  const LocationTransferReqToPage({super.key});
 
   @override
-  State<PutAwayPage> createState() => _PutAwayPageState();
+  State<LocationTransferReqToPage> createState() =>
+      _LocationTransferReqToPageState();
 }
 
-class _PutAwayPageState extends State<PutAwayPage> {
+class _LocationTransferReqToPageState extends State<LocationTransferReqToPage> {
   // Controllers
   final TextEditingController _forkliftController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _sourceLocationController =
+      TextEditingController();
+  final TextEditingController _destinationLocationController =
+      TextEditingController();
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
-  // Focus nodes
   final FocusNode _forkliftFocus = FocusNode();
-  final FocusNode _locationFocus = FocusNode();
+  final FocusNode _sourceLocationFocus = FocusNode();
+  final FocusNode _destinationLocationFocus = FocusNode();
   final FocusNode _stockFocus = FocusNode();
   final FocusNode _quantityFocus = FocusNode();
 
-  // State
   late LocationTransferData _transferData;
+  String _carrierLabel = 'Carrier';
 
   @override
   void initState() {
     super.initState();
     _transferData = LocationTransferData();
-    // Set default values
-    _forkliftController.text = "SRC-001"; // Source Location default
-    _locationController.text = "DST-001"; // Destination Location default
 
-    _transferData = LocationTransferData(
-      forkliftCode: _forkliftController.text,
-      destinationLocationCode: _locationController.text,
-      currentStep: 2,
-    );
     // Add focus listeners to auto-update steps
     _forkliftFocus.addListener(_onForkliftFocusChanged);
-    _locationFocus.addListener(_onLocationFocusChanged);
+    _sourceLocationFocus.addListener(_onSourceLocationFocusChanged);
+    _destinationLocationFocus.addListener(_onDestinationLocationFocusChanged);
     _stockFocus.addListener(_onStockFocusChanged);
     _quantityFocus.addListener(_onQuantityFocusChanged);
+
+    // Add listener for manual text input
+    _forkliftController.addListener(_onForkliftTextChanged);
 
     // Auto-focus the first input
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,21 +55,46 @@ class _PutAwayPageState extends State<PutAwayPage> {
     });
   }
 
+  // Add this method to determine carrier type based on code
+  String _getCarrierType(String code) {
+    if (code.isEmpty) return 'Carrier';
+
+    if (code.toLowerCase().startsWith('f') ||
+        code.toLowerCase().contains('fork') ||
+        code.toLowerCase().contains('fl')) {
+      return 'Forklift';
+    } else if (code.toLowerCase().startsWith('t') ||
+        code.toLowerCase().contains('troll') ||
+        code.toLowerCase().contains('tr')) {
+      return 'Trolley';
+    }
+    return 'Carrier'; // Default fallback
+  }
+
+  void _onForkliftTextChanged() {
+    setState(() {
+      _carrierLabel = _getCarrierType(_forkliftController.text);
+    });
+  }
+
   @override
   void dispose() {
     // Remove focus listeners
-
     _forkliftFocus.removeListener(_onForkliftFocusChanged);
-    _locationFocus.removeListener(_onLocationFocusChanged);
+    _sourceLocationFocus.removeListener(_onSourceLocationFocusChanged);
+    _destinationLocationFocus
+        .removeListener(_onDestinationLocationFocusChanged);
     _stockFocus.removeListener(_onStockFocusChanged);
     _quantityFocus.removeListener(_onQuantityFocusChanged);
 
     _forkliftController.dispose();
-    _locationController.dispose();
+    _sourceLocationController.dispose();
+    _destinationLocationController.dispose();
     _stockController.dispose();
     _quantityController.dispose();
     _forkliftFocus.dispose();
-    _locationFocus.dispose();
+    _sourceLocationFocus.dispose();
+    _destinationLocationFocus.dispose();
     _stockFocus.dispose();
     _quantityFocus.dispose();
     super.dispose();
@@ -95,7 +120,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
         onPressed: () => Navigator.pop(context),
       ),
       centerTitle: true,
-      title: const Text('Direct Transfer', style: GRNConstants.headerStyle),
+      title: const Text('Transfer Request To', style: GRNConstants.headerStyle),
       actions: [
         if (_transferData.currentStep > 0)
           IconButton(
@@ -109,20 +134,9 @@ class _PutAwayPageState extends State<PutAwayPage> {
   Widget _buildBody() {
     return Column(
       children: [
-        // Progress Steps
-        ProgressStepsWidget(
-          currentStep: _getCurrentStep(),
-          forkliftCode: _forkliftController.text.trim().isEmpty
-              ? null
-              : _transferData.forkliftCode,
-          stockItems: _transferData.stockItems,
-          sourceLocationCode: _locationController.text.trim().isEmpty
-              ? null
-              : _transferData.destinationLocationCode,
-          step0Label: 'Source Location',
-          step1Label: 'Item',
-          step2Label: 'Destination Location',
-        ),
+        // Progress Steps (Extended for destination location)
+        _buildProgressSteps(),
+
         // Content
         Expanded(
           child: SingleChildScrollView(
@@ -152,50 +166,150 @@ class _PutAwayPageState extends State<PutAwayPage> {
     );
   }
 
-  int _getCurrentStep() {
-    if (_transferData.forkliftCode == null &&
-        _transferData.stockItems.isEmpty &&
-        _transferData.destinationLocationCode == null) {
-      return 0; // All empty - start from beginning
-    } else if (_transferData.forkliftCode == null) {
-      return 0; // Stock Location step
-    } else if (_transferData.stockItems.isEmpty) {
-      return 1; // Stock Items step
-    } else if (_transferData.destinationLocationCode == null) {
-      return 2; // Production Location step
-    } else {
-      return 3; // All steps completed
-    }
+  Widget _buildProgressSteps() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Step 1: Carrier
+              _buildStepIndicator(
+                step: 1,
+                label: _carrierLabel,
+                isCompleted: _transferData.forkliftCode != null,
+                isActive: _transferData.currentStep >= 1,
+                value: _transferData.forkliftCode,
+              ),
+              Expanded(
+                  child: _buildStepConnector(
+                      isCompleted: _transferData.currentStep > 1)),
+
+              // Step 2: Items
+              _buildStepIndicator(
+                step: 2,
+                label: 'Items',
+                isCompleted: _transferData.stockItems.isNotEmpty,
+                isActive: _transferData.currentStep >= 2,
+                value: _transferData.stockItems.isNotEmpty
+                    ? '${_transferData.stockItems.length} item(s)'
+                    : null,
+              ),
+              Expanded(
+                  child: _buildStepConnector(
+                      isCompleted: _transferData.currentStep > 2)),
+
+              // Step 3: Source Location
+              _buildStepIndicator(
+                step: 3,
+                label: 'From',
+                isCompleted: _transferData.sourceLocationCode != null,
+                isActive: _transferData.currentStep >= 3,
+                value: _transferData.sourceLocationCode,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: Container()),
+              Expanded(child: Container()),
+              // Step 4: Destination Location
+              _buildStepIndicator(
+                step: 4,
+                label: 'To',
+                isCompleted: _transferData.destinationLocationCode != null,
+                isActive: _transferData.currentStep >= 4,
+                value: _transferData.destinationLocationCode,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepIndicator({
+    required int step,
+    required String label,
+    required bool isCompleted,
+    required bool isActive,
+    String? value,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isCompleted
+                ? GRNConstants.primaryBlue
+                : isActive
+                    ? GRNConstants.primaryBlue.withOpacity(0.3)
+                    : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: isCompleted
+                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                : Text(
+                    step.toString(),
+                    style: TextStyle(
+                      color: isActive
+                          ? GRNConstants.primaryBlue
+                          : Colors.grey[600],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isActive ? GRNConstants.primaryBlue : Colors.grey[600],
+          ),
+        ),
+        if (value != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStepConnector({required bool isCompleted}) {
+    return Container(
+      height: 2,
+      color: isCompleted ? GRNConstants.primaryBlue : Colors.grey[300],
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+    );
   }
 
   Widget _buildScanInputs() {
     return Column(
       children: [
-        // Forklift Input (Stock Location)
+        // Forklift Input
         ScanInputWidget(
           controller: _forkliftController,
           focusNode: _forkliftFocus,
-          label: 'Source Location',
-          icon: Icons.source, // Trolley icon
+          label: _carrierLabel,
+          icon: Icons.forklift,
           isActive: true,
           isCompleted: false,
           value: _transferData.forkliftCode,
           onScan: _onForkliftScanned,
           onBarcodePressed: () => _openBarcodeScanner('forklift'),
-          onChanged: (value) {
-            if (value.trim().isEmpty) {
-              setState(() {
-                _transferData = _transferData.copyWith(
-                  forkliftCode: null,
-                  clearErrorMessage: true,
-                );
-              });
-              // Clear the controller to ensure visual state matches data state
-              if (_forkliftController.text.trim().isEmpty) {
-                _transferData = _transferData.copyWith(forkliftCode: null);
-              }
-            }
-          },
         ),
 
         const SizedBox(height: 16),
@@ -210,32 +324,32 @@ class _PutAwayPageState extends State<PutAwayPage> {
 
         const SizedBox(height: 16),
 
-        // Production Location Input
+        // Source Location Input
         ScanInputWidget(
-          controller: _locationController,
-          focusNode: _locationFocus,
-          label: 'Destination Location',
-          icon: Icons.location_on,
+          controller: _sourceLocationController,
+          focusNode: _sourceLocationFocus,
+          label: 'Source Location (From)',
+          icon: Icons.source,
+          isActive: true,
+          isCompleted: false,
+          value: _transferData.sourceLocationCode,
+          onScan: _onSourceLocationScanned,
+          onBarcodePressed: () => _openBarcodeScanner('source_location'),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Destination Location Input
+        ScanInputWidget(
+          controller: _destinationLocationController,
+          focusNode: _destinationLocationFocus,
+          label: 'Destination Location (To)',
+          icon: Icons.place,
           isActive: true,
           isCompleted: false,
           value: _transferData.destinationLocationCode,
-          onScan: _onLocationScanned,
-          onBarcodePressed: () => _openBarcodeScanner('location'),
-          onChanged: (value) {
-            if (value.trim().isEmpty) {
-              setState(() {
-                _transferData = _transferData.copyWith(
-                  destinationLocationCode: null,
-                  clearErrorMessage: true,
-                );
-              });
-              // Clear the controller to ensure visual state matches data state
-              if (_locationController.text.trim().isEmpty) {
-                _transferData =
-                    _transferData.copyWith(destinationLocationCode: null);
-              }
-            }
-          },
+          onScan: _onDestinationLocationScanned,
+          onBarcodePressed: () => _openBarcodeScanner('destination_location'),
         ),
       ],
     );
@@ -322,75 +436,44 @@ class _PutAwayPageState extends State<PutAwayPage> {
                 borderSide: const BorderSide(color: GRNConstants.primaryBlue),
               ),
             ),
-            onChanged: (value) {
-              if (value.trim().isEmpty) {
-                setState(() {
-                  _transferData = _transferData.copyWith(
-                    clearErrorMessage: true,
-                  );
-                });
-              }
-            },
             onFieldSubmitted: (value) {
               _quantityFocus.requestFocus();
             },
           ),
           const SizedBox(height: 12),
-          // Quantity Input Row with + - buttons and return button
-          Row(
-            children: [
-              // Quantity Input Field
-              Expanded(
-                child: TextFormField(
-                  controller: _quantityController,
-                  focusNode: _quantityFocus,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  textInputAction: TextInputAction.done,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Enter quantity to transfer',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          BorderSide(color: Colors.grey.withOpacity(0.3)),
-                    ),
-                    floatingLabelStyle: const TextStyle(
-                      color: GRNConstants.primaryBlue,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide:
-                          const BorderSide(color: GRNConstants.primaryBlue),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.keyboard_return_rounded),
-                      color: GRNConstants.primaryBlue,
-                      onPressed: () {
-                        _addStockItem();
-                      },
-                    ),
-                  ),
-                  onChanged: (value) {
-                    if (value.trim().isEmpty) {
-                      setState(
-                        () {
-                          _transferData = _transferData.copyWith(
-                            clearErrorMessage: true,
-                          );
-                        },
-                      );
-                    }
-                  },
-                  onFieldSubmitted: (value) {
-                    _addStockItem();
-                  },
-                ),
-              ),
-            
+          // Quantity Input
+          TextFormField(
+            controller: _quantityController,
+            focusNode: _quantityFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.done,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
             ],
+            decoration: InputDecoration(
+              labelText: 'Enter quantity to transfer',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+              ),
+              floatingLabelStyle: const TextStyle(
+                color: GRNConstants.primaryBlue,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GRNConstants.primaryBlue),
+              ),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.keyboard_return_rounded),
+                color: GRNConstants.primaryBlue,
+                onPressed: () {
+                  _addStockItem();
+                },
+              ),
+            ),
+            onFieldSubmitted: (value) {
+              _addStockItem();
+            },
           ),
         ],
       ),
@@ -478,28 +561,26 @@ class _PutAwayPageState extends State<PutAwayPage> {
                                       Row(
                                         children: [
                                           Text(
-                                            'Stock Name: ', // Label
+                                            'Stock Name: ',
                                             style: TextStyle(
                                               fontSize: 15,
                                               color: Colors.grey[800],
-                                              fontWeight: FontWeight
-                                                  .bold, // Bold for the label
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                           Text(
-                                            item.itemName!, // Value
+                                            item.itemName!,
                                             style: TextStyle(
                                               fontSize: 15,
                                               color: Colors.grey[800],
-                                              fontWeight: FontWeight
-                                                  .normal, // Normal weight for the value
+                                              fontWeight: FontWeight.normal,
                                             ),
                                           ),
                                         ],
                                       ),
-
-
-                                        if ((item.lotNo != null &&
+                                    const SizedBox(height: 4),
+                                    // Show lot information if available
+                                    if ((item.lotNo != null &&
                                             item.lotNo!.isNotEmpty) ||
                                         (item.lotBatch != null &&
                                             item.lotBatch!.isNotEmpty) ||
@@ -511,82 +592,75 @@ class _PutAwayPageState extends State<PutAwayPage> {
                                         children: [
                                           if (item.lotNo != null &&
                                               item.lotNo!.isNotEmpty)
-                                             
                                             Row(
                                               children: [
                                                 Text(
-                                                  'Lot No: ', // Label
+                                                  'Lot No: ',
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .bold, // Bold for the label
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 Text(
-                                                  item.lotNo!, // Value
+                                                  item.lotNo!,
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .normal, // Normal weight for the value
+                                                    fontWeight:
+                                                        FontWeight.normal,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           if (item.lotBatch != null &&
                                               item.lotBatch!.isNotEmpty)
-                                                   const SizedBox(height: 4),
                                             Row(
                                               children: [
                                                 Text(
-                                                  'Lot Batch: ', // Label
+                                                  'Lot Batch: ',
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .bold, // Bold for the label
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 Text(
-                                                  item.lotBatch!, // Value
+                                                  item.lotBatch!,
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .normal, // Normal weight for the value
+                                                    fontWeight:
+                                                        FontWeight.normal,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           if (item.lotSeq != null &&
                                               item.lotSeq!.isNotEmpty)
-                                                   const SizedBox(height: 4),
                                             Row(
                                               children: [
                                                 Text(
-                                                  'Lot Seq: ', // Label
+                                                  'Lot Seq: ',
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .bold, // Bold for the label
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 Text(
-                                                  item.lotSeq!, // Value
+                                                  item.lotSeq!,
                                                   style: TextStyle(
                                                     fontSize: 15,
                                                     color: Colors.grey[800],
-                                                    fontWeight: FontWeight
-                                                        .normal, // Normal weight for the value
+                                                    fontWeight:
+                                                        FontWeight.normal,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                         ],
                                       ),
-
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
@@ -595,8 +669,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
                                           style: TextStyle(
                                             fontSize: 15,
                                             color: Colors.grey[800],
-                                            fontWeight: FontWeight
-                                                .bold, // Bold for the label
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         Container(
@@ -649,7 +722,6 @@ class _PutAwayPageState extends State<PutAwayPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Add the label here
             Text(
               'Total Items Scan',
               style: TextStyle(
@@ -687,9 +759,9 @@ class _PutAwayPageState extends State<PutAwayPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.05),
+        color: Colors.red.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -710,17 +782,18 @@ class _PutAwayPageState extends State<PutAwayPage> {
   }
 
   Widget _buildActionButtons() {
-    // Check if we can submit
-    final canSubmit = _transferData.forkliftCode?.isNotEmpty == true &&
-        _transferData.destinationLocationCode?.isNotEmpty == true &&
-        _transferData.stockItems.isNotEmpty;
+    // Check if all required fields are filled for submission
+    bool canSubmit = _transferData.forkliftCode != null &&
+        _transferData.stockItems.isNotEmpty &&
+        _transferData.sourceLocationCode != null &&
+        _transferData.destinationLocationCode != null;
 
     return Row(
       children: [
         // Submit Button
         Expanded(
           child: ElevatedButton(
-            onPressed: canSubmit ? _submitPutAway : null,
+            onPressed: canSubmit ? _submitTransfer : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: GRNConstants.accentBlue,
               foregroundColor: Colors.white,
@@ -739,7 +812,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  canSubmit ? 'Confirm Transfer' : 'Continue',
+                  canSubmit ? 'Submit Transfer Request' : 'Continue',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -752,77 +825,45 @@ class _PutAwayPageState extends State<PutAwayPage> {
 
   // Focus change handlers
   void _onForkliftFocusChanged() {
-    if (!_forkliftFocus.hasFocus) {
-      final text = _forkliftController.text.trim();
-      if (text.isNotEmpty) {
-        _onForkliftScanned(text);
-      } else {
-        // Clear the data when input is empty
-        setState(() {
-          _transferData = _transferData.copyWith(
-            forkliftCode: null,
-            currentStep: 0,
-            clearErrorMessage: true,
-          );
-        });
-      }
+    if (!_forkliftFocus.hasFocus &&
+        _forkliftController.text.trim().isNotEmpty) {
+      _onForkliftScanned(_forkliftController.text);
     }
   }
 
-  void _onLocationFocusChanged() {
-    if (!_locationFocus.hasFocus) {
-      final text = _locationController.text.trim();
-      if (text.isNotEmpty) {
-        _onLocationScanned(text);
-      } else {
-        // Clear the data when input is empty
-        setState(() {
-          _transferData = _transferData.copyWith(
-            destinationLocationCode: null,
-            clearErrorMessage: true,
-          );
-        });
-      }
+  void _onSourceLocationFocusChanged() {
+    if (!_sourceLocationFocus.hasFocus &&
+        _sourceLocationController.text.trim().isNotEmpty) {
+      _onSourceLocationScanned(_sourceLocationController.text);
+    }
+  }
+
+  void _onDestinationLocationFocusChanged() {
+    if (!_destinationLocationFocus.hasFocus &&
+        _destinationLocationController.text.trim().isNotEmpty) {
+      _onDestinationLocationScanned(_destinationLocationController.text);
     }
   }
 
   void _onStockFocusChanged() {
-    if (!_stockFocus.hasFocus) {
-      final text = _stockController.text.trim();
-      if (text.isNotEmpty) {
-        _onStockScanned(text);
-      } else {
-        // Clear the data when input is empty
+    setState(() {}); // Always rebuild when focus changes
+    if (!_stockFocus.hasFocus && _stockController.text.trim().isNotEmpty) {
+      _onStockScanned(_stockController.text);
+    }
+  }
+
+  void _onQuantityFocusChanged() {
+    setState(() {}); // Always rebuild when focus changes
+    if (!_quantityFocus.hasFocus &&
+        _quantityController.text.trim().isNotEmpty) {
+      final quantity = double.tryParse(_quantityController.text.trim());
+      if (quantity != null) {
         setState(() {
           _transferData = _transferData.copyWith(
-            stockCode: null,
             clearErrorMessage: true,
           );
         });
       }
-    }
-    setState(() {
-      // Trigger rebuild when focus changes
-    });
-  }
-
-  void _onQuantityFocusChanged() {
-    if (!_quantityFocus.hasFocus) {
-      final text = _quantityController.text.trim();
-      if (text.isNotEmpty) {
-        final quantity = double.tryParse(text);
-        if (quantity != null) {
-          setState(() {
-            _transferData = _transferData.copyWith(
-              quantity: quantity,
-              clearErrorMessage: true,
-            );
-          });
-        }
-      }
-      setState(() {
-        // Trigger rebuild when focus changes
-      });
     }
   }
 
@@ -830,9 +871,10 @@ class _PutAwayPageState extends State<PutAwayPage> {
     if (code.trim().isEmpty) return;
 
     setState(() {
+      _carrierLabel = _getCarrierType(code.trim());
       _transferData = _transferData.copyWith(
         forkliftCode: code.trim(),
-        currentStep: 1, // Move to Stock Items step
+        currentStep: 1,
         clearErrorMessage: true,
       );
     });
@@ -840,34 +882,44 @@ class _PutAwayPageState extends State<PutAwayPage> {
     _forkliftController.text = code.trim();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _stockFocus.requestFocus(); // Focus on stock input instead
+      _stockFocus.requestFocus();
     });
   }
 
-  void _onLocationScanned(String code) {
+  void _onSourceLocationScanned(String code) {
+    if (code.trim().isEmpty) return;
+
+    setState(() {
+      _transferData = _transferData.copyWith(
+        sourceLocationCode: code.trim(),
+        currentStep: 3,
+        clearErrorMessage: true,
+      );
+    });
+
+    _sourceLocationController.text = code.trim();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _destinationLocationFocus.requestFocus();
+    });
+  }
+
+  void _onDestinationLocationScanned(String code) {
     if (code.trim().isEmpty) return;
 
     setState(() {
       _transferData = _transferData.copyWith(
         destinationLocationCode: code.trim(),
-        currentStep: 3, // Complete all steps
+        currentStep: 4,
         clearErrorMessage: true,
       );
     });
 
-    _locationController.text = code.trim();
+    _destinationLocationController.text = code.trim();
   }
 
   void _onStockScanned(String code) {
     if (code.trim().isEmpty) return;
-
-    setState(() {
-      _transferData = _transferData.copyWith(
-        stockCode: code.trim(),
-        currentStep: 3, // Complete all steps
-        clearErrorMessage: true,
-      );
-    });
 
     _stockController.text = code.trim();
 
@@ -886,6 +938,86 @@ class _PutAwayPageState extends State<PutAwayPage> {
     });
   }
 
+  void _addStockItem() {
+    final stockCode = _stockController.text.trim();
+    final quantityText = _quantityController.text.trim();
+
+    if (stockCode.isEmpty || quantityText.isEmpty) {
+      setState(() {
+        _transferData = _transferData.copyWith(
+          errorMessage: 'Please enter both stock code and quantity',
+        );
+      });
+      return;
+    }
+
+    final quantity = double.tryParse(quantityText);
+    if (quantity == null || quantity <= 0) {
+      setState(() {
+        _transferData = _transferData.copyWith(
+          errorMessage: 'Please enter a valid quantity',
+        );
+      });
+      return;
+    }
+
+    // Check if stock code already exists
+    if (_transferData.stockItems.any((item) => item.stockCode == stockCode)) {
+      setState(() {
+        _transferData = _transferData.copyWith(
+          errorMessage: 'Stock code already added',
+        );
+      });
+      return;
+    }
+
+    final newItem = StockItem(
+      stockCode: stockCode,
+      quantity: quantity,
+      lotNo: 'LOT2024001',
+      lotBatch: 'BATCH01',
+      lotSeq: 'SEQ001',
+      itemName: 'Sample Item Name',
+    );
+
+    setState(() {
+      _transferData = _transferData.copyWith(
+        stockItems: [..._transferData.stockItems, newItem],
+        currentStep:
+            _transferData.stockItems.isEmpty ? 2 : _transferData.currentStep,
+        clearErrorMessage: true,
+      );
+    });
+
+    // Auto-focus source location if this is the first stock item
+    if (_transferData.stockItems.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sourceLocationFocus.requestFocus();
+      });
+    }
+
+    // Clear inputs and focus back to stock for next item
+    _stockController.clear();
+    _quantityController.clear();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _stockFocus.requestFocus();
+    });
+  }
+
+  void _removeStockItem(int index) {
+    setState(() {
+      final newStockItems = List<StockItem>.from(_transferData.stockItems);
+      newStockItems.removeAt(index);
+
+      _transferData = _transferData.copyWith(
+        stockItems: newStockItems,
+        currentStep: newStockItems.isEmpty ? 1 : _transferData.currentStep,
+        clearErrorMessage: true,
+      );
+    });
+  }
+
   Future<void> _openBarcodeScanner(String type) async {
     final result = await Navigator.push<String>(
       context,
@@ -899,8 +1031,11 @@ class _PutAwayPageState extends State<PutAwayPage> {
         case 'forklift':
           _onForkliftScanned(result);
           break;
-        case 'location':
-          _onLocationScanned(result);
+        case 'source_location':
+          _onSourceLocationScanned(result);
+          break;
+        case 'destination_location':
+          _onDestinationLocationScanned(result);
           break;
         case 'stock':
           _onStockScanned(result);
@@ -909,11 +1044,17 @@ class _PutAwayPageState extends State<PutAwayPage> {
     }
   }
 
-  Future<void> _submitPutAway() async {
+  Future<void> _submitTransfer() async {
+    // Check if all required fields are filled
     if (_transferData.forkliftCode == null ||
-        _transferData.destinationLocationCode == null ||
-        _transferData.stockCode == null ||
-        _transferData.quantity == null) {
+        _transferData.stockItems.isEmpty ||
+        _transferData.sourceLocationCode == null ||
+        _transferData.destinationLocationCode == null) {
+      setState(() {
+        _transferData = _transferData.copyWith(
+          errorMessage: 'Please fill all required fields',
+        );
+      });
       return;
     }
 
@@ -924,16 +1065,17 @@ class _PutAwayPageState extends State<PutAwayPage> {
       );
     });
 
-    final request = LocationTransferRequest(
+ 
+    final request = LocationToRequest(
       forkliftCode: _transferData.forkliftCode!,
-      sourceLocationCode: _transferData.destinationLocationCode!,
-      stockItems: [],
+      destinationLocationCode: _transferData.destinationLocationCode!,
+      stockItems: _transferData.stockItems,
     );
 
     try {
       // Use mock service for testing, replace with real service
       final response =
-          await LocationTransferService.submitTransferMock(request);
+          await LocationTransferService.submitTransferToMock(request);
 
       setState(() {
         _transferData = _transferData.copyWith(
@@ -955,7 +1097,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
       setState(() {
         _transferData = _transferData.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to submit put away: $e',
+          errorMessage: 'Failed to submit transfer request: $e',
         );
       });
     }
@@ -975,72 +1117,17 @@ class _PutAwayPageState extends State<PutAwayPage> {
   void _resetTransfer() {
     setState(() {
       _transferData = LocationTransferData();
+      _carrierLabel = 'Carrier';
     });
 
     _forkliftController.clear();
-    _locationController.clear();
+    _sourceLocationController.clear();
+    _destinationLocationController.clear();
     _stockController.clear();
     _quantityController.clear();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _forkliftFocus.requestFocus();
-    });
-  }
-
-  void _addStockItem() {
-    final stockCode = _stockController.text.trim();
-    final quantity = double.tryParse(_quantityController.text.trim());
-
-    if (stockCode.isEmpty) {
-      setState(() {
-        _transferData = _transferData.copyWith(
-          errorMessage: 'Please enter a stock code',
-        );
-      });
-      return;
-    }
-
-    if (quantity == null || quantity <= 0) {
-      setState(() {
-        _transferData = _transferData.copyWith(
-          errorMessage: 'Please enter a valid quantity',
-        );
-      });
-      return;
-    }
-
-    final newItem = StockItem(
-      stockCode: stockCode,
-      quantity: quantity,
-      itemName: 'Sample Item Name',
-        lotNo: 'LOT12345',
-        lotBatch: 'BATCH01',
-        lotSeq: 'SEQ001',
-    );
-
-    setState(() {
-      _transferData = _transferData.copyWith(
-        stockItems: [..._transferData.stockItems, newItem],
-        currentStep: 2, // Move to Production Location step after adding stock
-        clearErrorMessage: true,
-      );
-    });
-
-    _stockController.clear();
-    _quantityController.clear();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _stockFocus.requestFocus();
-    });
-  }
-
-  void _removeStockItem(int index) {
-    setState(() {
-      final updatedItems = List<StockItem>.from(_transferData.stockItems);
-      updatedItems.removeAt(index);
-      _transferData = _transferData.copyWith(
-        stockItems: updatedItems,
-      );
     });
   }
 }

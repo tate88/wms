@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'location_transfer_page.dart';
 import 'location_to_page.dart';
 import 'put_away_page.dart';
+import 'location_transfer_req.dart';
 import '../../constants/wms_constant.dart';
 
 class LocationTransferSelectionPage extends StatelessWidget {
@@ -27,7 +28,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
       ),
       centerTitle: true,
       title:
-          const Text('Warehouse Operations', style: GRNConstants.headerStyle),
+          const Text('Location Transfer', style: GRNConstants.headerStyle),
     );
   }
 
@@ -38,58 +39,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: GRNConstants.primaryBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: GRNConstants.primaryBlue.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: GRNConstants.primaryBlue,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.swap_horiz,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Select Operation',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: GRNConstants.primaryBlue,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Choose the warehouse operation you want to perform',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
+        
 
             // Transfer Options
             Expanded(
@@ -99,10 +49,10 @@ class LocationTransferSelectionPage extends StatelessWidget {
                     // Put Away Option
                     _buildTransferOption(
                       context: context,
-                      title: 'PUT AWAY with SINGLE TRANSFER',
-                      subtitle: 'Move stock to storage locations',
+                      title: 'Direct Transfer',
+                      subtitle: 'Receive item directly',
                       description:
-                          'Scan forklift → destination location → stock code → quantity',
+                          '',
                       icon: Icons.drive_file_move,
                       color: GRNConstants.primaryBlue,
                       onTap: () => _navigateToPutAway(context),
@@ -113,12 +63,11 @@ class LocationTransferSelectionPage extends StatelessWidget {
                     // Transfer From Option
                     _buildTransferOption(
                       context: context,
-                      title: 'Transfer From Location',
-                      subtitle: 'Move stock from a source location',
-                      description:
-                          'Scan forklift → source location → stock code → quantity',
+                      title: 'Load Transfer',
+                      subtitle: 'Move item to carrier',
+                  
                       icon: Icons.logout,
-                      color: GRNConstants.orange,
+                      color: GRNConstants.primaryBlue,
                       onTap: () => _navigateToTransferFrom(context),
                     ),
 
@@ -127,13 +76,25 @@ class LocationTransferSelectionPage extends StatelessWidget {
                     // Transfer To Option
                     _buildTransferOption(
                       context: context,
-                      title: 'Transfer To Location',
-                      subtitle: 'Move stock to a destination location',
-                      description:
-                          'Scan forklift → destination location → stock code → quantity',
+                      title: 'Receive Transfer',
+                      subtitle: 'Receive item from carrier',
+                 
                       icon: Icons.login,
-                      color: GRNConstants.green,
+                      color: GRNConstants.primaryBlue,
                       onTap: () => _navigateToTransferTo(context),
+                    ),
+
+
+                        const SizedBox(height: 20),
+
+                    // Transfer To Option
+                    _buildTransferOption(
+                      context: context,
+                      title: 'Transfer Request From',
+                      subtitle: 'Receive item from carrier',
+                      icon: Icons.login,
+                      color: GRNConstants.primaryBlue,
+                      onTap: () => _navigateToTransferRequestFrom(context),
                     ),
                   ],
                 ),
@@ -151,7 +112,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
     required BuildContext context,
     required String title,
     required String subtitle,
-    required String description,
+    String? description,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
@@ -233,35 +194,7 @@ class LocationTransferSelectionPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: color.withOpacity(0.1)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: color,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: color.withOpacity(0.8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+           
           ],
         ),
       ),
@@ -291,6 +224,14 @@ class LocationTransferSelectionPage extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => const LocationToPage(),
+      ),
+    );
+  }
+    void _navigateToTransferRequestFrom(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LocationTransferReqPage(),
       ),
     );
   }

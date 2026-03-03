@@ -1,28 +1,27 @@
 import '../../../constants/wms_constant.dart';
+import '../models/location_transfer_models.dart';
 import 'package:flutter/material.dart';
 
 class ProgressStepsWidget extends StatelessWidget {
   final int currentStep;
   final String? forkliftCode;
-  final String? locationCode;
-  final String? stockCode;
-  final double? quantity;
+  final List<StockItem> stockItems;
+  final String? sourceLocationCode;
+  final String? destinationLocationCode;
   final String? step0Label;
   final String? step1Label;
   final String? step2Label;
-  final String? step3Label;
 
   const ProgressStepsWidget({
     super.key,
     required this.currentStep,
     this.forkliftCode,
-    this.locationCode,
-    this.stockCode,
-    this.quantity,
+    this.stockItems = const [],
+    this.sourceLocationCode,
+    this.destinationLocationCode,
     this.step0Label,
     this.step1Label,
     this.step2Label,
-    this.step3Label,
   });
 
   @override
@@ -37,56 +36,34 @@ class ProgressStepsWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Progress Bar
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: _getProgress(),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A6FA5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
           // Steps
           Row(
             children: [
               _buildStepIndicator(
                 0,
                 step0Label ?? 'Forklift',
-                Icons.local_shipping,
+                step0Label == 'Carrier'
+                    ? Icons.forklift
+                    : step0Label == 'Forklift'
+                        ? Icons.forklift
+                        : step0Label == 'Trolley'
+                            ? Icons.forklift
+                            : Icons.source,
                 forkliftCode,
               ),
               _buildStepConnector(0),
               _buildStepIndicator(
                 1,
-                step1Label ?? 'Location',
-                Icons.location_on,
-                locationCode,
+                step1Label ?? 'Item',
+                Icons.inventory,
+                stockItems.isNotEmpty ? '${stockItems.length} items' : null,
               ),
               _buildStepConnector(1),
               _buildStepIndicator(
                 2,
-                step2Label ?? 'Stock',
-                Icons.inventory,
-                stockCode,
-              ),
-              _buildStepConnector(2),
-              _buildStepIndicator(
-                3,
-                step3Label ?? 'Quantity',
-                Icons.numbers,
-                quantity?.toString(),
+                step2Label ?? 'Source Location',
+                step2Label != null ? Icons.location_on : Icons.source,
+                sourceLocationCode,
               ),
             ],
           ),
@@ -101,8 +78,10 @@ class ProgressStepsWidget extends StatelessWidget {
     IconData icon,
     String? value,
   ) {
-    final bool isActive = currentStep >= step;
     final bool isCompleted = value?.isNotEmpty == true;
+    // For Items step (step 1), only make it active if there are actual items
+    final bool isActive =
+        step == 1 ? stockItems.isNotEmpty : currentStep >= step;
 
     return SizedBox(
       width: 70,
@@ -121,7 +100,9 @@ class ProgressStepsWidget extends StatelessWidget {
             ),
             child: Icon(
               isCompleted ? Icons.check : icon,
-              color: isActive ? Colors.white : Colors.grey[600],
+              color: isCompleted
+                  ? Colors.white
+                  : (isActive ? Colors.white : Colors.grey[600]),
               size: 20,
             ),
           ),
@@ -142,35 +123,23 @@ class ProgressStepsWidget extends StatelessWidget {
               ),
             ),
           ),
-          if (value?.isNotEmpty == true) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: GRNConstants.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: GRNConstants.green.withOpacity(0.3)),
-              ),
-              child: Text(
-                value!,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: GRNConstants.green,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 
   Widget _buildStepConnector(int step) {
-    final bool isCompleted = currentStep > step;
+    bool isCompleted = false;
+
+    // Check completion based on step number
+    if (step == 0) {
+      // Connector from Source Location to Items
+      isCompleted = forkliftCode?.isNotEmpty == true && stockItems.isNotEmpty;
+    } else if (step == 1) {
+      // Connector from Items to Destination Location
+      isCompleted =
+          stockItems.isNotEmpty && sourceLocationCode?.isNotEmpty == true;
+    }
 
     return Expanded(
       child: Container(
@@ -184,12 +153,10 @@ class ProgressStepsWidget extends StatelessWidget {
   double _getProgress() {
     switch (currentStep) {
       case 0:
-        return 0.25;
+        return 0.33;
       case 1:
-        return 0.5;
+        return 0.66;
       case 2:
-        return 0.75;
-      case 3:
         return 1.0;
       default:
         return 0.0;
@@ -201,26 +168,27 @@ class ScanInputWidget extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final String label;
-  final String hint;
+
   final IconData icon;
   final bool isActive;
   final bool isCompleted;
   final String? value;
   final Function(String) onScan;
   final VoidCallback? onBarcodePressed;
+  final Function(String)? onChanged;
 
   const ScanInputWidget({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.label,
-    required this.hint,
     required this.icon,
     required this.isActive,
     required this.isCompleted,
     required this.onScan,
     this.value,
     this.onBarcodePressed,
+    this.onChanged,
   });
 
   @override
@@ -229,8 +197,33 @@ class ScanInputWidget extends StatefulWidget {
 
 class _ScanInputWidgetState extends State<ScanInputWidget> {
   @override
+  void initState() {
+    super.initState();
+    // Add focus listener to rebuild when focus changes
+    widget.focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChanged);
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    setState(() {
+      // This will trigger a rebuild when focus changes
+    });
+  }
+
+  @override
   void didUpdateWidget(ScanInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // Update listener if focusNode changed
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode.removeListener(_onFocusChanged);
+      widget.focusNode.addListener(_onFocusChanged);
+    }
 
     // Update controller text when value changes
     if (widget.value != oldWidget.value && widget.value != null) {
@@ -274,37 +267,6 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
                     : Colors.grey[600],
               ),
             ),
-            if (widget.isCompleted) ...[
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: GRNConstants.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: GRNConstants.green.withOpacity(0.3)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: GRNConstants.green,
-                      size: 16,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Scanned',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: GRNConstants.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
 
@@ -313,19 +275,19 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
         // Input Field
         Container(
           decoration: BoxDecoration(
-            color: widget.isCompleted
-                ? GRNConstants.green.withOpacity(0.05)
-                : widget.isActive
-                    ? GRNConstants.primaryBlue.withOpacity(0.05)
+            color: widget.focusNode.hasFocus
+                ? GRNConstants.primaryBlue.withOpacity(0.05)
+                : widget.isCompleted
+                    ? GRNConstants.green.withOpacity(0.05)
                     : Colors.grey.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: widget.isCompleted
-                  ? GRNConstants.green
-                  : widget.isActive
-                      ? GRNConstants.primaryBlue
+              color: widget.focusNode.hasFocus
+                  ? GRNConstants.primaryBlue
+                  : widget.isCompleted
+                      ? GRNConstants.green
                       : Colors.grey[300]!,
-              width: widget.isActive ? 2 : 1,
+              width: widget.focusNode.hasFocus ? 2 : 1,
             ),
           ),
           child: TextField(
@@ -337,21 +299,13 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
                 widget.onScan(value.trim());
               }
             },
+            onChanged: widget.onChanged,
             decoration: InputDecoration(
-              hintText: widget.isCompleted ? widget.value : widget.hint,
               hintStyle: TextStyle(
                 color:
                     widget.isCompleted ? GRNConstants.green : Colors.grey[500],
                 fontWeight:
                     widget.isCompleted ? FontWeight.w500 : FontWeight.normal,
-              ),
-              prefixIcon: Icon(
-                widget.icon,
-                color: widget.isCompleted
-                    ? GRNConstants.green
-                    : widget.isActive
-                        ? GRNConstants.primaryBlue
-                        : Colors.grey[400],
               ),
               suffixIcon: widget.isCompleted
                   ? const Icon(Icons.check_circle, color: GRNConstants.green)
@@ -382,28 +336,6 @@ class _ScanInputWidgetState extends State<ScanInputWidget> {
         ),
 
         // Helper text for active step
-        if (widget.isActive && !widget.isCompleted) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: Colors.grey[600],
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Scan barcode or type manually and press Enter',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }

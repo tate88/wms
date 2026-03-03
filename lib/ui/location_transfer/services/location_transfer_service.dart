@@ -81,7 +81,8 @@ class LocationTransferService {
       );
     }
 
-    if (request.stockCode.toLowerCase() == 'notfound') {
+    if (request.stockItems.isNotEmpty &&
+        request.stockItems.first.stockCode.toLowerCase() == 'notfound') {
       return LocationTransferResponse(
         success: false,
         message: 'Stock not found in the specified location',
@@ -147,7 +148,14 @@ class LocationTransferService {
     buffer.writeln('Transfer Summary:');
     buffer.writeln('Forklift: ${data.forkliftCode ?? 'Not scanned'}');
     buffer.writeln('Location: ${data.sourceLocationCode ?? 'Not scanned'}');
-    buffer.writeln('Stock: ${data.stockCode ?? 'Not scanned'}');
+    if (data.stockItems.isNotEmpty) {
+      buffer.writeln('Stock Items:');
+      for (final item in data.stockItems) {
+        buffer.writeln('  ${item.stockCode} - Qty: ${item.quantity}');
+      }
+    } else {
+      buffer.writeln('Stock Items: None added');
+    }
     return buffer.toString();
   }
 }

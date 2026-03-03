@@ -17,6 +17,7 @@ class SuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -108,9 +109,16 @@ class SuccessDialog extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildDetailRow(
                     'Forklift/Trolley:', transferData.forkliftCode ?? ''),
-                _buildDetailRow(
-                    'Source Location:', transferData.sourceLocationCode ?? ''),
-                _buildDetailRow('Stock Code:', transferData.stockCode ?? ''),
+                if (transferData.sourceLocationCode != null &&
+                    transferData.sourceLocationCode!.isNotEmpty)
+                  _buildDetailRow(
+                      'Source Location:', transferData.sourceLocationCode!),
+                if (transferData.destinationLocationCode != null &&
+                    transferData.destinationLocationCode!.isNotEmpty)
+                  _buildDetailRow('Destination Location:',
+                      transferData.destinationLocationCode!),
+                ...transferData.stockItems.map((item) =>
+                    _buildDetailRow('${item.stockCode}:', '${item.quantity}')),
                 if (response.timestamp != null)
                   _buildDetailRow(
                       'Timestamp:', _formatDateTime(response.timestamp!)),
