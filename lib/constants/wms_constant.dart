@@ -5,6 +5,7 @@ class GRNConstants {
   static const Color lightBlue = Color(0xFF3a5998);
   static const Color accentBlue = Color(0xFF1E3A8A);
   static const Color green = Color.fromARGB(255, 12, 104, 73);
+  static const Color red = Color.fromARGB(255, 175, 50, 41);
   static const Color orange = Colors.orange;
   static const Color textMedium = Color(0xFF4A5568);
   static const Color textDark = Color(0xFF1A202C);

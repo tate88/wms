@@ -5,7 +5,7 @@ import 'models/location_transfer_models.dart';
 import 'services/location_transfer_service.dart';
 import 'widgets/location_transfer_widgets.dart';
 import 'dialogs/location_transfer_dialogs.dart';
-import '../../../constants/wms_constant.dart';
+import 'package:WMS/constants/wms_constant.dart';
 
 class LocationTransferReqToPage extends StatefulWidget {
   const LocationTransferReqToPage({super.key});
